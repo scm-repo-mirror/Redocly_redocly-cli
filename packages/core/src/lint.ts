@@ -20,7 +20,12 @@ import {
 import { Struct } from './rules/common/struct.js';
 import { NoUnresolvedRefs } from './rules/common/no-unresolved-refs.js';
 import { EntityKeyValid } from './rules/catalog-entity/entity-key-valid.js';
-import { createConfig, transformScorecardRulesToAssertions, type Config } from './config/index.js';
+import {
+  createConfig,
+  transformScorecardRulesToAssertions,
+  categorizeAssertions,
+  apiRulesToConfig,
+} from './config/index.js';
 import { isPlainObject } from './utils/is-plain-object.js';
 import { Assertions } from './rules/common/assertions/index.js';
 
@@ -44,6 +49,7 @@ import type {
 import type { CollectFn } from './utils/types.js';
 import type { JSONSchema } from 'json-schema-to-ts';
 import type { ScorecardConfig } from '@redocly/config';
+import type { Config } from './config/index.js';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore FIXME: remove this once we remove `theme` from the schema
@@ -323,17 +329,15 @@ export async function lintEntityByScorecardLevel(
   const entityDocument = makeDocumentFromString(JSON.stringify(entity, null, 2), 'entity.yaml');
 
   const assertionConfig = transformScorecardRulesToAssertions(config.rules);
+  const { entityRules, apiRules } = categorizeAssertions(assertionConfig);
 
   const entityProblems = await lintEntityFile({
     document: entityDocument,
     entitySchema: entityFileSchema,
     entityDefaultSchema: entityFileDefaultSchema,
     externalRefResolver,
-    assertionConfig: Object.values(assertionConfig)
-      .filter((r) => r.type === 'entityRule')
-      .map((r) => r.assertion),
+    assertionConfig: entityRules,
   });
-  const apiRules = Object.values(assertionConfig).filter((r) => r.type === 'apiRule');
 
   if (TYPES_OF_ENTITY.includes(entity.type)) {
     if (apiRules.length === 0) {
@@ -347,19 +351,9 @@ export async function lintEntityByScorecardLevel(
     const apiProblems = await lintDocument({
       document,
       externalRefResolver,
-      config: await createConfig(
-        {
-          rules: Object.assign(
-            {},
-            ...Object.values(assertionConfig)
-              .filter((r) => r.type === 'apiRule')
-              .map((r) => ({
-                [r.assertion.assertionId]: r.assertion,
-              }))
-          ),
-        },
-        {}
-      ),
+      config: await createConfig({
+        rules: apiRulesToConfig(apiRules),
+      }),
     });
 
     return [...entityProblems, ...apiProblems];
