@@ -424,6 +424,8 @@ const AssertionDefinitionAssertions: NodeType = {
     if (/^\w+\/\w+$/.test(key)) return {};
     return;
   },
+  documentationLink: 'https://redocly.com/docs/cli/rules/configurable-rules#assertion-object',
+  description: 'A minimum of one assertion property is required to be defined.',
 };
 
 const AssertDefinition: NodeType = {
