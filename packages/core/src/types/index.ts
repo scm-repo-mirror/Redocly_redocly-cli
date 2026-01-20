@@ -43,6 +43,8 @@ export type NormalizedNodeType = {
   allowed?: (value: any) => string[] | undefined;
   extensionsPrefix?: string;
   directResolveAs?: NormalizedPropType;
+  description?: string;
+  documentationLink?: string;
 };
 
 type NormalizedPropType = NormalizedNodeType | NormalizedScalarSchema | null | undefined;
