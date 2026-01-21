@@ -216,7 +216,7 @@ const configGovernanceProperties: Record<
   NodeType['properties'][string]
 > = {
   extends: {
-    name: 'ConfigGovernanceList',
+    name: 'Root.extends',
     properties: {},
     items: (node) => {
       // check if it's preset name
@@ -228,6 +228,9 @@ const configGovernanceProperties: Record<
         directResolveAs: { name: 'ConfigGovernance', ...ConfigGovernance },
       } as PropType;
     },
+    description:
+      'The extends configuration entry allows your project configuration to extend an existing configuration set.',
+    documentationLink: 'https://redocly.com/docs/cli/configuration/reference/extends#extends',
   } as PropType,
   plugins: { type: 'array', items: { type: 'string' } },
 
