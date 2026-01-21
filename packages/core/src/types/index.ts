@@ -17,6 +17,8 @@ export type NormalizedScalarSchema = {
   directResolveAs?: NormalizedNodeType;
   resolvable: boolean;
   minimum?: number;
+  description?: string;
+  documentationLink?: string;
 };
 
 export type NodeType = {
