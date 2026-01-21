@@ -216,7 +216,7 @@ const configGovernanceProperties: Record<
   NodeType['properties'][string]
 > = {
   extends: {
-    name: 'Root.extends',
+    name: 'ConfigRoot.extends',
     properties: {},
     items: (node) => {
       // check if it's preset name
@@ -320,13 +320,13 @@ const Rules: NodeType = {
       if (typeof value === 'string') {
         return { enum: ['error', 'warn', 'off'] };
       } else {
-        return 'Assert';
+        return 'ConfigurableRule';
       }
     } else if (builtInRules.includes(key as BuiltInRuleId) || isCustomRuleId(key)) {
       if (typeof value === 'string') {
         return { enum: ['error', 'warn', 'off'] };
       } else {
-        return 'ObjectRule';
+        return 'BuiltinRule';
       }
     } else if (key === 'metadata-schema' || key === 'custom-fields-schema') {
       return 'Schema';
@@ -336,7 +336,7 @@ const Rules: NodeType = {
   },
 };
 
-const ObjectRule: NodeType = {
+const BuiltinRule: NodeType = {
   properties: {
     severity: { enum: ['error', 'warn', 'off'] },
   },
@@ -414,7 +414,7 @@ function createScorecardLevelsItems(nodeTypes: Record<string, NodeType>): NodeTy
   };
 }
 
-const AssertionDefinitionAssertions: NodeType = {
+const Assertions: NodeType = {
   properties: {
     enum: {
       type: 'array',
@@ -549,27 +549,31 @@ const AssertionDefinitionAssertions: NodeType = {
   description: 'A minimum of one assertion property is required to be defined.',
 };
 
-const AssertDefinition: NodeType = {
+const WhereObject: NodeType = {
   properties: {
-    subject: 'AssertionDefinitionSubject',
-    assertions: 'AssertionDefinitionAssertions',
-  },
-  required: ['subject', 'assertions'],
-};
-
-const Assert: NodeType = {
-  properties: {
-    subject: 'AssertionDefinitionSubject',
-    assertions: 'AssertionDefinitionAssertions',
-    where: listOf('AssertDefinition'),
-    message: { type: 'string' },
-    suggest: { type: 'array', items: { type: 'string' } },
-    severity: { enum: ['error', 'warn', 'off'] },
+    subject: 'Subject',
+    assertions: 'Assertions',
   },
   required: ['subject', 'assertions'],
   documentationLink: 'https://redocly.com/docs/cli/rules/configurable-rules#where-object',
   description:
     'The where object is part of a where list which must be defined in order from the root node. Each node can only be used in one where object for each assertion. Each subsequent node must be a descendant of the previous one. Rules that use multiple where objects must target each one on a different node. However, the same node could be used in the last where object and in the root subject object. Nodes may be skipped in between the subject node types of the where list and those defined in the root subject type.',
+};
+
+const ConfigurableRule: NodeType = {
+  properties: {
+    subject: 'Subject',
+    assertions: 'Assertions',
+    where: listOf('WhereObject'),
+    message: { type: 'string' },
+    suggest: { type: 'array', items: { type: 'string' } },
+    severity: { enum: ['error', 'warn', 'off'] },
+  },
+  required: ['subject', 'assertions'],
+  documentationLink:
+    'https://redocly.com/docs/cli/rules/configurable-rules#configurable-rule-object',
+  description:
+    'Configurable rule definitions enforce your custom API design standards. Add or edit your configurable rules in the configuration file. A configurable rule is a rule that starts with a rule/ prefix followed by a unique rule name. Rule names display in the lint log if the assertions fail. More than one configurable rule may be defined, and any configurable rule may have multiple assertions.',
 };
 
 export function createConfigTypes(extraSchemas: JSONSchema, config?: Config) {
@@ -584,22 +588,22 @@ export function createConfigTypes(extraSchemas: JSONSchema, config?: Config) {
     ...CoreConfigTypes,
     ConfigRoot: createConfigRoot(nodeTypes), // This is the REAL config root type
     ConfigApisProperties: createConfigApisProperties(nodeTypes),
-    AssertionDefinitionSubject: createAssertionDefinitionSubject(nodeNames),
+    Subject: createAssertionDefinitionSubject(nodeNames),
     ...nodeTypes,
     'rootRedoclyConfigSchema.scorecard.levels_items': createScorecardLevelsItems(nodeTypes),
   };
 }
 
 const CoreConfigTypes: Record<string, NodeType> = {
-  Assert,
+  ConfigurableRule,
   ConfigApis,
   ConfigGovernance,
   ConfigHTTP,
-  AssertDefinition,
-  ObjectRule,
+  WhereObject,
+  BuiltinRule,
   Schema,
   Rules,
-  AssertionDefinitionAssertions,
+  Assertions,
 };
 
 // FIXME: remove this once we remove `theme` from the schema
